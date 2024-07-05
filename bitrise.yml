@@ -1,5 +1,5 @@
 ---
-format_version: '8'
+format_version: '13'
 default_step_lib_source: 'https://github.com/bitrise-io/bitrise-steplib.git'
 project_type: android
 trigger_map:
@@ -20,14 +20,12 @@ workflows:
     steps:
     - activate-ssh-key@4:
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
-    - git-clone@4: {}
-    - cache-pull@2: {}
-    - script@1:
-        title: Do anything with Script step
-    - install-missing-android-tools@2:
+    - git-clone@8: {}
+    - restore-gradle-cache@2: {}
+    - install-missing-android-tools@3:
         inputs:
         - gradlew_path: $PROJECT_LOCATION/gradlew
-    - android-build@0:
+    - android-build@1:
         inputs:
         - variant: stagingDebug
         title: Build (staging variant)
@@ -43,8 +41,8 @@ workflows:
         - variant: stagingDebug
         - module: $MODULE
         title: Unit Test (staging variant)
-    - deploy-to-bitrise-io@1: {}
-    - cache-push@2: {}
+    - deploy-to-bitrise-io@2: {}
+    - save-gradle-cache@1: {}
   deploy-live:
     description: >
       ## How to get a signed APK
@@ -101,9 +99,9 @@ workflows:
     steps:
     - activate-ssh-key@4:
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
-    - git-clone@4: {}
-    - cache-pull@2: {}
-    - install-missing-android-tools@2:
+    - git-clone@8: {}
+    - restore-gradle-cache@2: {}
+    - install-missing-android-tools@3:
         inputs:
         - gradlew_path: $PROJECT_LOCATION/gradlew
     - android-lint@0:
@@ -118,7 +116,7 @@ workflows:
         - variant: liveRelease
         - module: $MODULE
         title: Unit Test (live variant)
-    - android-build@0:
+    - android-build@1:
         inputs:
         - project_location: $PROJECT_LOCATION
         - variant: liveRelease
@@ -128,15 +126,15 @@ workflows:
         run_if: '{{getenv "BITRISEIO_ANDROID_KEYSTORE_URL" | ne ""}}'
         inputs:
         - use_apk_signer: 'true'
-    - deploy-to-bitrise-io@1: {}
-    - cache-push@2: {}
+    - deploy-to-bitrise-io@2: {}
+    - save-gradle-cache@1: {}
   deploy-staging:
     steps:
     - activate-ssh-key@4:
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
-    - git-clone@4: {}
-    - cache-pull@2: {}
-    - install-missing-android-tools@2:
+    - git-clone@8: {}
+    - restore-gradle-cache@2: {}
+    - install-missing-android-tools@3:
         inputs:
         - gradlew_path: $PROJECT_LOCATION/gradlew
     - android-lint@0:
@@ -151,7 +149,7 @@ workflows:
         - variant: stagingRelease
         - module: $MODULE
         title: Unit Test (staging variant)
-    - android-build@0:
+    - android-build@1:
         inputs:
         - project_location: $PROJECT_LOCATION
         - variant: liveRelease
@@ -161,5 +159,9 @@ workflows:
         run_if: '{{getenv "BITRISEIO_ANDROID_KEYSTORE_URL" | ne ""}}'
         inputs:
         - use_apk_signer: 'true'
-    - deploy-to-bitrise-io@1: {}
-    - cache-push@2: {}
+    - deploy-to-bitrise-io@2: {}
+    - save-gradle-cache@1: {}
+meta:
+  bitrise.io:
+    stack: linux-docker-android-22.04
+    machine_type_id: elite
